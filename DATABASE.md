@@ -101,6 +101,14 @@ The file `init-scripts/01-init-database.sql` runs automatically the very first t
 
 > **Important:** If the `postgres_data` Docker volume already exists, this script will **not** re-run. To re-initialise from scratch, run `docker compose down -v` first to delete the volume.
 
+**Upgrading an existing database:** if your volume was created before the import columns were added (imports fail with `column "entry_id" does not exist` or `there is no unique or exclusion constraint matching the ON CONFLICT specification`), apply the migration instead of deleting your data:
+
+```bash
+docker exec -i jimcrow_db psql -U jimcrow_user -d jimcrow_laws < migrations/001_add_import_columns.sql
+```
+
+It is safe to run more than once.
+
 ---
 
 ## Database Schema
@@ -113,7 +121,7 @@ This is the main table queried by the API and search UI. Every imported statute 
 |---------------------|-------------------|-------------|
 | `id`                | UUID (PK)         | Auto-generated unique ID |
 | `entry_id`          | VARCHAR (UNIQUE)  | Stable ID from the processing pipeline, e.g. `gen_assemb_1865_p87_s1`. Used to prevent duplicate imports. |
-| `title`             | VARCHAR(500)      | Short descriptive title of the statute or section |
+| `title`             | TEXT              | Short descriptive title of the statute or section |
 | `source_file`       | VARCHAR(255)      | Original filename (e.g. `Gen Assemb 1865_results_classified.json`) |
 | `document_type`     | VARCHAR(100)      | Type of source document: `session_laws`, `constitution`, `codes`, `amendments`, `criminal_laws`, `civil_laws`, `other` |
 | `year`              | INTEGER           | Year the law was enacted |
